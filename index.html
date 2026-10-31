@@ -216,9 +216,9 @@ const IS_IOS = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platf
 const IS_STANDALONE = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
 
 const LIBS = {
-  jszip: { global: () => window.JSZip, local: 'lib/jszip.min.js', cdn: 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js' },
-  jspdf: { global: () => window.jspdf && window.jspdf.jsPDF, local: 'lib/jspdf.umd.min.js', cdn: 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js' },
-  autotable: { global: () => window.jspdf && window.jspdf.jsPDF && window.jspdf.jsPDF.API && window.jspdf.jsPDF.API.autoTable, local: 'lib/jspdf.plugin.autotable.min.js', cdn: 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.4/jspdf.plugin.autotable.min.js' }
+  jszip: { global: () => window.JSZip, local: 'lib/jszip.min.js', cdn: 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js', alt: 'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js' },
+  jspdf: { global: () => window.jspdf && window.jspdf.jsPDF, local: 'lib/jspdf.umd.min.js', cdn: 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js', alt: 'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js' },
+  autotable: { global: () => window.jspdf && window.jspdf.jsPDF && window.jspdf.jsPDF.API && window.jspdf.jsPDF.API.autoTable, local: 'lib/jspdf.plugin.autotable.min.js', cdn: 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js', alt: 'https://cdn.jsdelivr.net/npm/jspdf-autotable@3.5.28/dist/jspdf.plugin.autotable.min.js' }
 };
 
 /* ---------------- Helpers ---------------- */
@@ -241,6 +241,7 @@ async function needLib(name) {
   // Local copy first (bundled in the APK), then the CDN (cached offline by the service worker)
   try { await loadScript(L.local); if (L.global()) return; } catch (e) { }
   try { await loadScript(L.cdn); if (L.global()) return; } catch (e) { }
+  try { await loadScript(L.alt); if (L.global()) return; } catch (e) { }
   throw new Error('This feature needs to download a small library once. Connect to the internet and try again.');
 }
 function fmtDate(iso) {

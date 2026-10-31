@@ -15,8 +15,8 @@ const LOCAL = [
 
 const CDN = [
   'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.4/jspdf.plugin.autotable.min.js'
+  'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js'
 ];
 
 self.addEventListener('install', (event) => {
@@ -73,7 +73,7 @@ self.addEventListener('fetch', (event) => {
   }
 
   const sameOrigin = url.origin === self.location.origin;
-  const isCdn = url.hostname === 'cdnjs.cloudflare.com';
+  const isCdn = url.hostname === 'cdnjs.cloudflare.com' || url.hostname === 'cdn.jsdelivr.net';
   if (!sameOrigin && !isCdn) return;
 
   // Everything else: cache first, then network (and store it)
