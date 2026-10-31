@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Purchased Apps</title>
+<meta name="description" content="Offline history of every app purchased on each of your Google accounts.">
+<meta name="theme-color" content="#2563eb">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Purchased">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<style>
+:root{
+  --bg:#f4f6fb; --surface:#ffffff; --surface2:#eef1f8; --text:#141827; --muted:#5d6479;
+  --border:#dde2ee; --accent:#2563eb; --accent2:#7c3aed; --accent-soft:#e3ebff;
+  --good:#0f9d58; --warn:#c77700; --bad:#d93025; --shadow:0 2px 10px rgba(20,24,39,.07);
+  --radius:16px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f1220; --surface:#181c2e; --surface2:#21263b; --text:#eef0f7; --muted:#9aa1b8;
+    --border:#2b3150; --accent:#6c9bff; --accent2:#a78bfa; --accent-soft:#22305a;
+    --good:#4cc38a; --warn:#f0b54a; --bad:#ff7a70; --shadow:0 2px 12px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f1220; --surface:#181c2e; --surface2:#21263b; --text:#eef0f7; --muted:#9aa1b8;
+  --border:#2b3150; --accent:#6c9bff; --accent2:#a78bfa; --accent-soft:#22305a;
+  --good:#4cc38a; --warn:#f0b54a; --bad:#ff7a70; --shadow:0 2px 12px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:16px;line-height:1.4}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+.wrap{max-width:760px;margin:0 auto;padding:0 16px calc(96px + env(safe-area-inset-bottom))}
+
+/* Header */
+header{position:sticky;top:0;z-index:20;background:var(--bg);padding:calc(10px + env(safe-area-inset-top)) 0 8px;border-bottom:1px solid var(--border)}
+.hrow{display:flex;align-items:center;gap:10px;max-width:760px;margin:0 auto;padding:0 16px}
+.logo{width:36px;height:36px;border-radius:10px;flex:none}
+h1{font-size:20px;margin:0;flex:1;font-weight:700;letter-spacing:-.2px}
+.iconbtn{width:44px;height:44px;border-radius:12px;border:1px solid var(--border);background:var(--surface);display:grid;place-items:center;flex:none}
+.iconbtn svg{width:22px;height:22px}
+.iconbtn:active{transform:scale(.96)}
+
+/* Account chips */
+.chips{display:flex;gap:8px;overflow-x:auto;padding:10px 16px 2px;max-width:760px;margin:0 auto;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;border:1px solid var(--border);background:var(--surface);border-radius:14px;padding:8px 14px;min-height:48px;text-align:left;max-width:240px}
+.chip b{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip small{display:block;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.chip.active small{color:rgba(255,255,255,.85)}
+.chip.add{border-style:dashed;color:var(--accent);font-weight:600;display:flex;align-items:center;gap:6px}
+
+/* Tabs */
+.tabs{display:flex;gap:4px;background:var(--surface2);border-radius:14px;padding:4px;margin:14px 0 10px}
+.tab{flex:1;border:0;background:transparent;border-radius:10px;padding:10px 4px;min-height:44px;font-size:14px;font-weight:600;color:var(--muted)}
+.tab.active{background:var(--surface);color:var(--text);box-shadow:var(--shadow)}
+.tab .n{font-weight:500;opacity:.7;font-size:12px}
+
+/* Toolbar */
+.toolbar{display:grid;grid-template-columns:1fr auto auto;gap:8px;margin-bottom:12px}
+.search{position:relative}
+.search input{width:100%;height:48px;border-radius:12px;border:1px solid var(--border);background:var(--surface);padding:0 14px 0 40px}
+.search svg{position:absolute;left:12px;top:14px;width:20px;height:20px;color:var(--muted)}
+select{height:48px;border-radius:12px;border:1px solid var(--border);background:var(--surface);padding:0 10px;max-width:130px}
+
+/* Cards */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 16px;margin-bottom:12px}
+.totals h3{margin:0 0 6px;font-size:13px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);font-weight:700}
+.totrow{display:flex;flex-wrap:wrap;gap:8px}
+.pill{background:var(--accent-soft);color:var(--accent);border-radius:999px;padding:6px 12px;font-weight:700;font-size:15px}
+.acctot{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid var(--border);font-size:14px}
+.acctot:first-of-type{border-top:0}
+.acctot span:last-child{text-align:right;font-weight:600}
+.meta{color:var(--muted);font-size:13px;margin-top:6px}
+
+/* List */
+.list{display:flex;flex-direction:column;gap:8px}
+.item{display:flex;gap:12px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px 14px;min-height:64px;text-align:left;width:100%}
+.item:active{background:var(--surface2)}
+.av{width:42px;height:42px;border-radius:12px;flex:none;display:grid;place-items:center;font-weight:800;color:#fff;font-size:17px}
+.info{flex:1;min-width:0}
+.title{font-weight:650;font-size:15.5px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.sub{color:var(--muted);font-size:13px;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.price{font-weight:700;text-align:right;white-space:nowrap;font-size:15px}
+.badges{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}
+.badge{font-size:11px;font-weight:700;border-radius:6px;padding:2px 6px;background:var(--surface2);color:var(--muted)}
+.badge.free{background:rgba(15,157,88,.14);color:var(--good)}
+.badge.gone{background:rgba(217,48,37,.13);color:var(--bad)}
+.badge.ref{background:rgba(199,119,0,.15);color:var(--warn)}
+.badge.acct{background:var(--accent-soft);color:var(--accent)}
+
+.empty{text-align:center;padding:40px 16px;color:var(--muted)}
+.empty .big{font-size:44px;margin-bottom:6px}
+.empty h2{color:var(--text);font-size:19px;margin:6px 0}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:50px;padding:0 18px;border-radius:14px;border:1px solid var(--border);background:var(--surface);font-weight:650;font-size:15.5px;width:100%}
+.btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent2));border:0;color:#fff}
+.btn.danger{color:var(--bad);border-color:rgba(217,48,37,.4)}
+.btn svg{width:20px;height:20px}
+.btns{display:grid;gap:10px}
+.btns.two{grid-template-columns:1fr 1fr}
+
+/* Bottom action bar */
+.actionbar{position:fixed;left:0;right:0;bottom:0;z-index:25;background:var(--surface);border-top:1px solid var(--border);padding:8px 12px calc(8px + env(safe-area-inset-bottom))}
+.actionbar .in{max-width:760px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.ab{border:0;background:transparent;border-radius:12px;min-height:54px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:12px;font-weight:600;color:var(--muted)}
+.ab svg{width:24px;height:24px;color:var(--accent)}
+.ab:active{background:var(--surface2)}
+
+/* Sheets */
+.scrim{position:fixed;inset:0;background:rgba(5,8,18,.55);z-index:40;display:none;align-items:flex-end;justify-content:center}
+.scrim.open{display:flex}
+.sheet{background:var(--bg);width:100%;max-width:640px;max-height:92vh;overflow:auto;border-radius:22px 22px 0 0;padding:10px 18px calc(22px + env(safe-area-inset-bottom));animation:up .22s ease}
+@keyframes up{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
+.grab{width:42px;height:5px;border-radius:5px;background:var(--border);margin:4px auto 12px}
+.sheet h2{margin:0 0 4px;font-size:21px}
+.sheet p{color:var(--muted);margin:4px 0 14px}
+label.f{display:block;font-size:14px;font-weight:600;margin:12px 0 6px}
+input.t{width:100%;height:50px;border-radius:12px;border:1px solid var(--border);background:var(--surface);padding:0 14px}
+ol.steps{padding-left:0;list-style:none;counter-reset:s;margin:10px 0 16px}
+ol.steps li{counter-increment:s;position:relative;padding:10px 0 10px 44px;border-bottom:1px solid var(--border)}
+ol.steps li:before{content:counter(s);position:absolute;left:0;top:9px;width:30px;height:30px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font-weight:800;display:grid;place-items:center;font-size:14px}
+.note{background:var(--surface2);border-radius:12px;padding:10px 12px;font-size:13.5px;color:var(--muted);margin:10px 0}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:8px 14px;margin:14px 0;font-size:14.5px}
+.kv dt{color:var(--muted)}
+.kv dd{margin:0;font-weight:600;word-break:break-word}
+.sectlabel{font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);font-weight:700;margin:16px 0 8px}
+
+.toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#111526;color:#fff;padding:12px 18px;border-radius:12px;z-index:60;font-size:14.5px;max-width:90vw;box-shadow:0 6px 24px rgba(0,0,0,.3);display:none}
+.toast.show{display:block}
+.progress{height:6px;background:var(--surface2);border-radius:6px;overflow:hidden;margin:10px 0}
+.progress div{height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .2s}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hrow">
+    <img class="logo" src="icon-192.png" alt="">
+    <h1>Purchased Apps</h1>
+    <button class="iconbtn" id="themeBtn" aria-label="Toggle dark or light mode">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+    </button>
+    <button class="iconbtn" id="importTopBtn" aria-label="Import Takeout file">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M4 19h16"/></svg>
+    </button>
+  </div>
+  <div class="chips" id="chips"></div>
+</header>
+
+<main class="wrap">
+  <div class="tabs" id="tabs">
+    <button class="tab active" data-kind="app">Apps <span class="n" data-n="app"></span></button>
+    <button class="tab" data-kind="iap">In-app <span class="n" data-n="iap"></span></button>
+    <button class="tab" data-kind="sub">Subs <span class="n" data-n="sub"></span></button>
+    <button class="tab" data-kind="library">Library <span class="n" data-n="library"></span></button>
+  </div>
+
+  <div class="toolbar">
+    <div class="search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input id="q" type="search" placeholder="Search apps" autocomplete="off">
+    </div>
+    <select id="sort" aria-label="Sort">
+      <option value="date-desc">Newest</option>
+      <option value="date-asc">Oldest</option>
+      <option value="name-asc">Name A–Z</option>
+      <option value="name-desc">Name Z–A</option>
+      <option value="price-desc">Price high</option>
+      <option value="price-asc">Price low</option>
+    </select>
+    <select id="year" aria-label="Year"><option value="">All years</option></select>
+  </div>
+
+  <div id="totals"></div>
+  <div class="list" id="list"></div>
+</main>
+
+<nav class="actionbar">
+  <div class="in">
+    <button class="ab" id="installBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M12 7v7M9 11l3 3 3-3"/></svg>Install</button>
+    <button class="ab" id="updateBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 4v5h-5"/></svg>Update</button>
+    <button class="ab" id="shareBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>Share</button>
+    <button class="ab" id="moreBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>More</button>
+  </div>
+</nav>
+
+<div class="scrim" id="scrim"><div class="sheet" id="sheet"></div></div>
+<div class="toast" id="toast"></div>
+<input type="file" id="fileInput" accept=".zip,.json,application/zip,application/json,application/x-zip-compressed" multiple class="hidden">
+
+<script>
+'use strict';
+/* =========================================================
+   Purchased Apps — offline Play Store purchase history
+   Data source: Google Takeout (Google Play Store) exports.
+   Everything is stored locally in IndexedDB.
+   ========================================================= */
+const APP_VERSION = '1.0.0';
+const GH_USER = 'm9r1u5';
+const GH_REPO = 'Purchased-Apps';
+const APP_URL = `https://${GH_USER}.github.io/${GH_REPO}/`;
+const RELEASES_URL = `https://github.com/${GH_USER}/${GH_REPO}/releases/latest`;
+const IS_NATIVE = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+const IS_IOS = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const IS_STANDALONE = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+
+const LIBS = {
+  jszip: { global: () => window.JSZip, local: 'lib/jszip.min.js', cdn: 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js' },
+  jspdf: { global: () => window.jspdf && window.jspdf.jsPDF, local: 'lib/jspdf.umd.min.js', cdn: 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js' },
+  autotable: { global: () => window.jspdf && window.jspdf.jsPDF && window.jspdf.jsPDF.API && window.jspdf.jsPDF.API.autoTable, local: 'lib/jspdf.plugin.autotable.min.js', cdn: 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.4/jspdf.plugin.autotable.min.js' }
+};
+
+/* ---------------- Helpers ---------------- */
+const $ = (s, r = document) => r.querySelector(s);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+function toast(msg, ms = 2600) {
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), ms);
+}
+function loadScript(src) {
+  return new Promise((res, rej) => {
+    const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = () => rej(new Error('Could not load ' + src));
+    document.head.appendChild(s);
+  });
+}
+async function needLib(name) {
+  const L = LIBS[name];
+  if (L.global()) return;
+  // Local copy first (bundled in the APK), then the CDN (cached offline by the service worker)
+  try { await loadScript(L.local); if (L.global()) return; } catch (e) { }
+  try { await loadScript(L.cdn); if (L.global()) return; } catch (e) { }
+  throw new Error('This feature needs to download a small library once. Connect to the internet and try again.');
+}
+function fmtDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso); if (isNaN(d)) return '—';
+  return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+}
+function fmtMoney(amount, currency) {
+  if (amount == null || isNaN(amount)) return '';
+  if (amount === 0) return 'Free';
+  if (currency && /^[A-Z]{3}$/.test(currency)) {
+    try { return new Intl.NumberFormat(undefined, { style: 'currency', currency }).format(amount); } catch (e) { }
+  }
+  return (currency ? currency + ' ' : '') + amount.toFixed(2);
+}
+function colorFor(s) {
+  let h = 0; for (const c of String(s)) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  return `hsl(${h % 360} 62% 48%)`;
+}
+function openExternal(url) {
+  if (IS_NATIVE) { window.location.href = url; return; }
+  const w = window.open(url, '_blank', 'noopener');
+  if (!w) window.location.href = url;
+}
+
+/* ---------------- IndexedDB ---------------- */
+const DB = {
+  db: null,
+  open() {
+    return new Promise((res, rej) => {
+      const r = indexedDB.open('purchased-apps', 1);
+      r.onupgradeneeded = () => {
+        const d = r.result;
+        if (!d.objectStoreNames.contains('accounts')) d.createObjectStore('accounts', { keyPath: 'id' });
+        if (!d.objectStoreNames.contains('items')) {
+          const s = d.createObjectStore('items', { keyPath: 'id' });
+          s.createIndex('accountId', 'accountId');
+        }
+      };
+      r.onsuccess = () => { this.db = r.result; res(); };
+      r.onerror = () => rej(r.error);
+    });
+  },
+  tx(store, mode, fn) {
+    return new Promise((res, rej) => {
+      const t = this.db.transaction(store, mode);
+      const s = t.objectStore(store);
+      let out; const r = fn(s); if (r) r.onsuccess = () => { out = r.result; };
+      t.oncomplete = () => res(out); t.onerror = () => rej(t.error); t.onabort = () => rej(t.error);
+    });
+  },
+  all(store) { return this.tx(store, 'readonly', s => s.getAll()); },
+  put(store, v) { return this.tx(store, 'readwrite', s => s.put(v)); },
+  putMany(store, arr) {
+    return new Promise((res, rej) => {
+      const t = this.db.transaction(store, 'readwrite'); const s = t.objectStore(store);
+      arr.forEach(v => s.put(v)); t.oncomplete = res; t.onerror = () => rej(t.error);
+    });
+  },
+  del(store, key) { return this.tx(store, 'readwrite', s => s.delete(key)); },
+  async deleteAccount(id) {
+    const items = await this.all('items');
+    await new Promise((res, rej) => {
+      const t = this.db.transaction(['items', 'accounts'], 'readwrite');
+      const is = t.objectStore('items');
+      items.filter(i => i.accountId === id).forEach(i => is.delete(i.id));
+      t.objectStore('accounts').delete(id);
+      t.oncomplete = res; t.onerror = () => rej(t.error);
+    });
+  }
+};
+
+/* ---------------- State ---------------- */
+const state = {
+  accounts: [], items: [],
+  current: localStorage.getItem('pa.current') || 'all',
+  kind: 'app', q: '', sort: 'date-desc', year: ''
+};
+async function reload() {
+  state.accounts = (await DB.all('accounts')).sort((a, b) => a.created - b.created);
+  state.items = await DB.all('items');
+  if (state.current !== 'all' && !state.accounts.find(a => a.id === state.current)) state.current = 'all';
+  render();
+}
+
+/* =========================================================
+   TAKEOUT PARSER — flexible, detects content not file names
+   ========================================================= */
+const CURRENCY_SYMBOLS = [
+  ['US$', 'USD'], ['A$', 'AUD'], ['C$', 'CAD'], ['NZ$', 'NZD'], ['HK$', 'HKD'], ['S$', 'SGD'], ['R$', 'BRL'], ['MX$', 'MXN'],
+  ['€', 'EUR'], ['£', 'GBP'], ['¥', 'JPY'], ['₹', 'INR'], ['₩', 'KRW'], ['₦', 'NGN'], ['₱', 'PHP'], ['₺', 'TRY'], ['₪', 'ILS'],
+  ['₽', 'RUB'], ['₴', 'UAH'], ['₫', 'VND'], ['฿', 'THB'], ['zł', 'PLN'], ['Kč', 'CZK'], ['kr', 'SEK'], ['CHF', 'CHF'],
+  ['KSh', 'KES'], ['Rp', 'IDR'], ['RM', 'MYR'], ['R', 'ZAR'], ['$', 'USD']
+];
+function parsePrice(raw) {
+  if (raw == null) return null;
+  if (typeof raw === 'object') {
+    // e.g. { amountMicros, currencyCode } or { amount, currency }
+    const micros = raw.amountMicros ?? raw.priceMicros ?? raw.micros;
+    const cur = raw.currencyCode || raw.currency || null;
+    if (micros != null && !isNaN(+micros)) return { raw: `${cur || ''} ${(+micros / 1e6).toFixed(2)}`.trim(), amount: +micros / 1e6, currency: cur };
+    const amt = raw.amount ?? raw.value ?? raw.price;
+    if (amt != null) return parsePrice(cur ? `${cur} ${amt}` : amt);
+    const f = raw.formattedPrice || raw.formatted || raw.displayPrice;
+    return f ? parsePrice(f) : null;
+  }
+  if (typeof raw === 'number') return { raw: String(raw), amount: raw, currency: null };
+  let s = String(raw).trim();
+  if (!s) return null;
+  if (/^(free|gratis|kostenlos|gratuit|0)$/i.test(s)) return { raw: s, amount: 0, currency: null };
+  let currency = null;
+  const code = s.match(/\b([A-Z]{3})\b/);
+  if (code) currency = code[1];
+  else {
+    for (const [sym, c] of CURRENCY_SYMBOLS) {
+      if (s.includes(sym)) {
+        // "R" must stand alone next to the number (not inside words)
+        if (sym === 'R' && !/(^|\s|-)R\s?\d/.test(s)) continue;
+        if (sym === 'kr' && !/kr/i.test(s)) continue;
+        currency = c; break;
+      }
+    }
+  }
+  const numMatch = s.replace(/\s/g, '').match(/-?\d[\d.,']*/);
+  if (!numMatch) return { raw: s, amount: null, currency };
+  let n = numMatch[0].replace(/'/g, '');
+  const lastDot = n.lastIndexOf('.'), lastComma = n.lastIndexOf(',');
+  if (lastDot > -1 && lastComma > -1) {
+    if (lastComma > lastDot) n = n.replace(/\./g, '').replace(',', '.'); else n = n.replace(/,/g, '');
+  } else if (lastComma > -1) {
+    const dec = n.length - lastComma - 1;
+    n = (dec === 2 || dec === 1) ? n.replace(/\./g, '').replace(',', '.') : n.replace(/,/g, '');
+  } else if (lastDot > -1) {
+    const parts = n.split('.');
+    if (parts.length > 2 || (parts[1] && parts[1].length === 3 && !/[.,]\d{2}$/.test(n))) n = n.replace(/\./g, '');
+  }
+  const amount = parseFloat(n);
+  return { raw: s, amount: isNaN(amount) ? null : amount, currency };
+}
+
+function toISO(v) {
+  if (v == null || v === '') return null;
+  if (typeof v === 'object') {
+    if (v.seconds != null) return new Date(+v.seconds * 1000).toISOString();
+    if (v.millis != null) return new Date(+v.millis).toISOString();
+    return null;
+  }
+  if (typeof v === 'number' || /^\d{10,13}$/.test(String(v))) {
+    let n = +v; if (n < 1e12) n *= 1000;
+    const d = new Date(n); return isNaN(d) ? null : d.toISOString();
+  }
+  const d = new Date(v);
+  return isNaN(d) ? null : d.toISOString();
+}
+
+const PKG_RE = /^[a-zA-Z][a-zA-Z0-9_]*(\.[a-zA-Z0-9_]+)+$/;
+function findPackage(obj, depth = 0) {
+  if (!obj || typeof obj !== 'object' || depth > 5) return null;
+  for (const [k, v] of Object.entries(obj)) {
+    if (typeof v === 'string' && /^(docid|docId|documentId|backendDocid|packageName|package|appId|id)$/i.test(k)) {
+      const val = v.replace(/^app:/, '');
+      if (PKG_RE.test(val) && !/^(com\.google\.android\.finsky\.|play\.google|www\.)/.test(val)) return val;
+    }
+    if (typeof v === 'string' && /play\.google\.com\/store\/apps\/details\?id=([\w.]+)/.test(v)) {
+      return v.match(/id=([\w.]+)/)[1];
+    }
+  }
+  for (const v of Object.values(obj)) {
+    if (v && typeof v === 'object') { const p = findPackage(v, depth + 1); if (p) return p; }
+  }
+  return null;
+}
+function firstKey(obj, patterns, test) {
+  if (!obj || typeof obj !== 'object') return null;
+  for (const p of patterns) {
+    for (const [k, v] of Object.entries(obj)) {
+      if ((p instanceof RegExp ? p.test(k) : k === p) && v != null && v !== '' && (!test || test(v))) return v;
+    }
+  }
+  return null;
+}
+function deepFind(obj, patterns, test, depth = 0) {
+  if (!obj || typeof obj !== 'object' || depth > 4) return null;
+  const direct = firstKey(obj, patterns, test);
+  if (direct != null) return direct;
+  for (const v of Object.values(obj)) {
+    if (v && typeof v === 'object') { const r = deepFind(v, patterns, test, depth + 1); if (r != null) return r; }
+  }
+  return null;
+}
+
+function classify(docType, extra) {
+  const t = String(docType || '').toLowerCase();
+  if (/in[\s_-]?app|inapp|iap/.test(t)) return 'iap';
+  if (/subscri/.test(t)) return 'sub';
+  if (extra && extra.isSub) return 'sub';
+  if (/android.?app|^apps?$|application|^app$|android_app/.test(t)) return 'app';
+  if (!t && extra && extra.pkg) return 'app';
+  return null; // books, movies, music, devices… are ignored
+}
+
+/* Unwrap {purchaseHistory:{…}} style single-key wrappers and tell what kind of record it is */
+function unwrap(entry) {
+  if (!entry || typeof entry !== 'object') return { type: null, rec: entry };
+  const keys = Object.keys(entry);
+  if (keys.length === 1 && entry[keys[0]] && typeof entry[keys[0]] === 'object' && !Array.isArray(entry[keys[0]])) {
+    return { type: keys[0], rec: entry[keys[0]] };
+  }
+  return { type: null, rec: entry };
+}
+function detectFileType(arr, name) {
+  const sample = arr.slice(0, 20).map(e => unwrap(e));
+  const types = sample.map(s => (s.type || '').toLowerCase()).join(' ');
+  const fields = sample.map(s => Object.keys(s.rec || {}).join(' ')).join(' ').toLowerCase();
+  if (/purchasehistory/.test(types) || /purchasetime|invoiceprice/.test(fields)) return 'purchase';
+  if (/orderhistory/.test(types) || /lineitem|orderid|totalprice/.test(fields)) return 'order';
+  if (/subscription/.test(types) || /renewaldate|subscriptionstate|expirationdate/.test(fields)) return 'subscription';
+  if (/librarydoc|library/.test(types) || /acquisitiontime/.test(fields)) return 'library';
+  if (/install/.test(types) || /firstinstallationtime|lastupdatetime/.test(fields)) return 'install';
+  const n = (name || '').toLowerCase();
+  if (/purchase/.test(n)) return 'purchase';
+  if (/order/.test(n)) return 'order';
+  if (/subscri/.test(n)) return 'subscription';
+  if (/library/.test(n)) return 'library';
+  if (/install/.test(n)) return 'install';
+  return 'unknown';
+}
+
+const TIME_KEYS = ['purchaseTime', 'creationTime', 'orderTime', 'acquisitionTime', 'startTime', 'transactionTime', 'firstInstallationTime', /time$/i, /date$/i, /timestamp/i];
+const PRICE_KEYS = ['invoicePrice', 'totalPrice', 'price', 'formattedPrice', 'purchasePrice', 'paidPrice', /^(?!.*micros).*price/i, /^amount$/i, /^(?!.*micros).*cost/i];
+function getPrice(obj) {
+  const ok = x => (typeof x === 'string' && /\d|free/i.test(x)) || typeof x === 'number' || (x && typeof x === 'object' && !Array.isArray(x));
+  const v = deepFind(obj, PRICE_KEYS, ok);
+  if (v != null) return v;
+  const micros = deepFind(obj, [/micros$/i], x => !isNaN(+x));
+  if (micros != null) return { amountMicros: +micros, currencyCode: deepFind(obj, ['currencyCode', 'currency'], x => typeof x === 'string') };
+  return null;
+}
+const PAY_KEYS = ['paymentMethodTitle', 'paymentMethod', 'instrumentDisplayName', /paymentmethod/i, /instrument/i, /billing/i];
+
+function getPayment(rec) {
+  const v = deepFind(rec, PAY_KEYS, x => typeof x === 'string' || (typeof x === 'object' && (x.displayName || x.title || x.name)));
+  if (!v) return null;
+  if (typeof v === 'string') return v;
+  return v.displayName || v.title || v.name || null;
+}
+function getBadges(rec) {
+  const badges = [];
+  const s = JSON.stringify(rec).toLowerCase();
+  const inv = deepFind(rec, ['invalidityReason', /invalid/i, /refund/i], x => typeof x === 'string');
+  if (inv) badges.push(/refund/i.test(inv) ? 'Refunded' : inv.replace(/_/g, ' ').toLowerCase().replace(/^\w/, c => c.toUpperCase()));
+  else if (/"refund(ed)?"\s*:\s*true|"state"\s*:\s*"refunded"/.test(s)) badges.push('Refunded');
+  if (/"(isremoved|removed|delisted|unavailable|notavailable|isunavailable)"\s*:\s*true|no longer available|removed from (the )?store/.test(s)) badges.push('No longer on store');
+  if (/"preorder"\s*:\s*true/.test(s)) badges.push('Pre-order');
+  const st = deepFind(rec, ['state', 'subscriptionState', 'status'], x => typeof x === 'string');
+  if (st && /cancel|expired|active|paused|hold|grace/i.test(st)) badges.push(st.replace(/_/g, ' ').toLowerCase().replace(/^\w/, c => c.toUpperCase()));
+  return badges;
+}
+
+function recordsFromArray(arr, fileType, sourceName) {
+  const out = [];
+  for (const entry of arr) {
+    const { rec } = unwrap(entry);
+    if (!rec || typeof rec !== 'object') continue;
+
+    // Order history: may contain several line items
+    const lineItems = Array.isArray(rec.lineItem) ? rec.lineItem : (Array.isArray(rec.lineItems) ? rec.lineItems : null);
+    const orderId = firstKey(rec, ['orderId', 'orderNumber', /orderid/i], x => typeof x === 'string' || typeof x === 'number');
+    const payment = getPayment(rec);
+    const time = toISO(deepFind(rec, TIME_KEYS, x => toISO(x) != null));
+    const parts = lineItems && lineItems.length ? lineItems : [rec];
+
+    parts.forEach((part, idx) => {
+      const doc = part.doc || part.document || rec.doc || rec.document || part;
+      const title = doc && (doc.title || doc.name || doc.displayName) || part.title || rec.title;
+      if (!title) return;
+      const docType = (doc && (doc.documentType || doc.docType || doc.type)) || part.documentType || rec.documentType || '';
+      const pkg = findPackage(doc) || findPackage(part);
+      const isSub = fileType === 'subscription' || !!part.subscription || /subscri/i.test(JSON.stringify(Object.keys(part)));
+      let kind = classify(docType, { isSub, pkg });
+      if (fileType === 'subscription' && kind !== 'iap') kind = kind ? (kind === 'app' ? 'sub' : kind) : 'sub';
+      if (!kind) return;
+      if (fileType === 'library' || fileType === 'install') kind = kind === 'app' ? 'library' : null;
+      if (!kind) return;
+
+      let priceRaw = null;
+      if (parts.length === 1) priceRaw = getPrice(rec);
+      else priceRaw = getPrice(part);
+      if (fileType === 'subscription' && priceRaw == null) {
+        const pr = rec.pricing || rec.prices;
+        if (Array.isArray(pr) && pr.length) priceRaw = pr[0].price || pr[0].formattedPrice || pr[0];
+      }
+      const price = (fileType === 'library' || fileType === 'install') ? null : parsePrice(priceRaw);
+      const partTime = toISO(deepFind(part, TIME_KEYS, x => toISO(x) != null)) || time;
+
+      const badges = getBadges(part === rec ? rec : { ...rec, lineItem: undefined, _part: part });
+      if (price && price.amount === 0 && kind !== 'library') badges.unshift('Free');
+
+      out.push({
+        kind, title: String(title).trim(), packageId: pkg || null,
+        purchaseTime: partTime,
+        priceRaw: price ? price.raw : null, amount: price ? price.amount : null, currency: price ? price.currency : null,
+        paymentMethod: payment || null,
+        orderId: orderId != null ? String(orderId) + (parts.length > 1 ? '#' + idx : '') : null,
+        badges: [...new Set(badges)],
+        sources: [sourceName]
+      });
+    });
+  }
+  return out;
+}
+
+async function parseInputFiles(files, onProgress) {
+  const jsonFiles = []; // {name, text}
+  let step = 0;
+  for (const f of files) {
+    step++;
+    onProgress && onProgress(`Reading ${f.name}…`, step / (files.length + 1) * 0.5);
+    if (/\.zip$/i.test(f.name) || /zip/.test(f.type)) {
+      await needLib('jszip');
+      const zip = await window.JSZip.loadAsync(f);
+      const entries = Object.values(zip.files).filter(e => !e.dir && /\.json$/i.test(e.name));
+      for (const e of entries) {
+        // Only Play Store folder (or anything if not found) — Takeout may include other products
+        jsonFiles.push({ name: e.name, text: await e.async('string') });
+      }
+    } else if (/\.json$/i.test(f.name) || /json/.test(f.type)) {
+      jsonFiles.push({ name: f.name, text: await f.text() });
+    }
+  }
+  const playOnly = jsonFiles.filter(j => /play.?store|play_store|google play/i.test(j.name));
+  const candidates = playOnly.length ? playOnly : jsonFiles;
+  const records = []; const summary = {};
+  for (const j of candidates) {
+    let data;
+    try { data = JSON.parse(j.text.replace(/^﻿/, '')); } catch (e) { continue; }
+    let arr = Array.isArray(data) ? data : null;
+    if (!arr && data && typeof data === 'object') {
+      const firstArr = Object.values(data).find(Array.isArray);
+      arr = firstArr || [data];
+    }
+    if (!arr) continue;
+    const type = detectFileType(arr, j.name);
+    if (type === 'unknown') continue;
+    const short = j.name.split('/').pop();
+    const recs = recordsFromArray(arr, type, short);
+    summary[short] = recs.length;
+    records.push(...recs);
+  }
+  return { records, summary, jsonCount: jsonFiles.length };
+}
+
+/* Merge + de-duplicate into an account */
+const norm = (s) => String(s || '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '');
+function sameItem(a, b) {
+  if (a.kind !== b.kind) {
+    // a purchase can show up as library on the other side — never merge those
+    return false;
+  }
+  if (a.orderId && b.orderId) return a.orderId === b.orderId;
+  if (norm(a.title) !== norm(b.title)) return false;
+  if (a.kind === 'library') return true;
+  if (!a.purchaseTime || !b.purchaseTime) return !a.purchaseTime && !b.purchaseTime;
+  return Math.abs(new Date(a.purchaseTime) - new Date(b.purchaseTime)) <= 10 * 60 * 1000; // within 10 min = same purchase
+}
+function mergeInto(target, src) {
+  for (const k of ['packageId', 'purchaseTime', 'priceRaw', 'currency', 'paymentMethod', 'orderId']) {
+    if (!target[k] && src[k]) target[k] = src[k];
+  }
+  if ((target.amount == null) && src.amount != null) target.amount = src.amount;
+  target.badges = [...new Set([...(target.badges || []), ...(src.badges || [])])];
+  target.sources = [...new Set([...(target.sources || []), ...(src.sources || [])])];
+}
+async function importForAccount(accountId, records) {
+  const existing = state.items.filter(i => i.accountId === accountId);
+  const working = existing.map(i => ({ ...i }));
+  let added = 0, merged = 0;
+  for (const r of records) {
+    const match = working.find(w => sameItem(w, r));
+    if (match) { mergeInto(match, r); merged++; }
+    else { working.push({ ...r, id: uid(), accountId }); added++; }
+  }
+  // Enrich package IDs across kinds by title (library often has the package)
+  const pkgByTitle = {};
+  working.forEach(w => { if (w.packageId) pkgByTitle[norm(w.title)] = w.packageId; });
+  working.forEach(w => { if (!w.packageId && pkgByTitle[norm(w.title)]) w.packageId = pkgByTitle[norm(w.title)]; });
+  await DB.putMany('items', working);
+  const acc = state.accounts.find(a => a.id === accountId);
+  if (acc) { acc.lastImport = Date.now(); await DB.put('accounts', acc); }
+  return { added, merged };
+}
+
+/* =========================================================
+   RENDER
+   ========================================================= */
+function accountName(id) { const a = state.accounts.find(x => x.id === id); return a ? a.label : ''; }
+function scopedItems(acct = state.current) { return state.items.filter(i => acct === 'all' || i.accountId === acct); }
+function filtered() {
+  let arr = scopedItems().filter(i => i.kind === state.kind);
+  if (state.q) { const q = state.q.toLowerCase(); arr = arr.filter(i => i.title.toLowerCase().includes(q) || (i.packageId || '').toLowerCase().includes(q)); }
+  if (state.year) arr = arr.filter(i => i.purchaseTime && new Date(i.purchaseTime).getFullYear() === +state.year);
+  const t = (i) => i.purchaseTime ? new Date(i.purchaseTime).getTime() : 0;
+  const p = (i) => i.amount == null ? -1 : i.amount;
+  const sorters = {
+    'date-desc': (a, b) => t(b) - t(a), 'date-asc': (a, b) => t(a) - t(b),
+    'name-asc': (a, b) => a.title.localeCompare(b.title), 'name-desc': (a, b) => b.title.localeCompare(a.title),
+    'price-desc': (a, b) => p(b) - p(a), 'price-asc': (a, b) => p(a) - p(b)
+  };
+  return arr.sort(sorters[state.sort]);
+}
+function sumByCurrency(arr) {
+  const m = {};
+  arr.forEach(i => { if (i.amount != null && i.amount > 0 && !(i.badges || []).includes('Refunded')) { const c = i.currency || '?'; m[c] = (m[c] || 0) + i.amount; } });
+  return m;
+}
+function moneyPills(m) {
+  const keys = Object.keys(m);
+  if (!keys.length) return '<span class="meta">No paid items</span>';
+  return keys.sort().map(c => `<span class="pill">${esc(fmtMoney(m[c], c === '?' ? null : c))}</span>`).join('');
+}
+
+function renderChips() {
+  const el = $('#chips');
+  const chip = (id, label, sub) => `<button class="chip ${state.current === id ? 'active' : ''}" data-acc="${esc(id)}"><b>${esc(label)}</b><small>${esc(sub)}</small></button>`;
+  let h = chip('all', 'All accounts', `${state.accounts.length} account${state.accounts.length === 1 ? '' : 's'}`);
+  state.accounts.forEach(a => { h += chip(a.id, a.label, a.email); });
+  h += `<button class="chip add" id="addChip"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Add Account</button>`;
+  el.innerHTML = h;
+  el.querySelectorAll('[data-acc]').forEach(b => {
+    b.onclick = () => { state.current = b.dataset.acc; localStorage.setItem('pa.current', state.current); render(); };
+    let timer; // long-press to manage account
+    b.addEventListener('contextmenu', e => { e.preventDefault(); if (b.dataset.acc !== 'all') accountSheet(b.dataset.acc); });
+    b.addEventListener('touchstart', () => { timer = setTimeout(() => { if (b.dataset.acc !== 'all') accountSheet(b.dataset.acc); }, 600); }, { passive: true });
+    b.addEventListener('touchend', () => clearTimeout(timer));
+    b.addEventListener('touchmove', () => clearTimeout(timer));
+  });
+  $('#addChip').onclick = () => addAccountSheet();
+}
+
+function renderYears() {
+  const years = [...new Set(scopedItems().filter(i => i.purchaseTime).map(i => new Date(i.purchaseTime).getFullYear()))].sort((a, b) => b - a);
+  const sel = $('#year');
+  if (state.year && !years.includes(+state.year)) state.year = '';
+  sel.innerHTML = '<option value="">All years</option>' + years.map(y => `<option ${String(y) === state.year ? 'selected' : ''}>${y}</option>`).join('');
+}
+
+function renderTotals(list) {
+  const el = $('#totals');
+  if (!state.accounts.length) { el.innerHTML = ''; return; }
+  const label = { app: 'apps', iap: 'in-app purchases', sub: 'subscriptions', library: 'library apps' }[state.kind];
+  if (state.kind === 'library') {
+    el.innerHTML = `<div class="card totals"><h3>Library</h3><div class="meta" style="margin:0">${list.length} ${label} ever added to ${state.current === 'all' ? 'your accounts' : 'this account'} (free and paid). Prices aren't included in library data.</div></div>`;
+    return;
+  }
+  let h = `<div class="card totals"><h3>${state.current === 'all' ? 'All accounts' : esc(accountName(state.current))} · ${esc(label)}${state.year ? ' · ' + esc(state.year) : ''}</h3>
+    <div class="totrow">${moneyPills(sumByCurrency(list))}</div>
+    <div class="meta">${list.length} item${list.length === 1 ? '' : 's'} shown · refunds excluded from totals</div>`;
+  if (state.current === 'all' && state.accounts.length > 1) {
+    h += '<div class="sectlabel">Per account</div>';
+    state.accounts.forEach(a => {
+      const sub = list.filter(i => i.accountId === a.id);
+      const m = sumByCurrency(sub);
+      const txt = Object.keys(m).length ? Object.keys(m).sort().map(c => fmtMoney(m[c], c === '?' ? null : c)).join(' + ') : '—';
+      h += `<div class="acctot"><span>${esc(a.label)} <span class="meta">(${sub.length})</span></span><span>${esc(txt)}</span></div>`;
+    });
+  }
+  el.innerHTML = h + '</div>';
+}
+
+function badgeClass(b) {
+  if (/^free$/i.test(b)) return 'free';
+  if (/no longer|removed|unavailable/i.test(b)) return 'gone';
+  if (/refund|cancel|expired|revoked|charge/i.test(b)) return 'ref';
+  return '';
+}
+function renderList(list) {
+  const el = $('#list');
+  if (!state.accounts.length) {
+    el.innerHTML = `<div class="empty"><div class="big">🛍️</div><h2>See every app you've bought</h2>
+      <p>Add a Google account, export its Play Store history from Google Takeout, then import the .zip here. Everything stays on this phone.</p>
+      <div class="btns" style="max-width:320px;margin:16px auto 0"><button class="btn primary" id="emptyAdd">Add Account</button></div></div>`;
+    $('#emptyAdd').onclick = () => addAccountSheet();
+    return;
+  }
+  if (!scopedItems().length) {
+    el.innerHTML = `<div class="empty"><div class="big">📦</div><h2>No data imported yet</h2>
+      <p>Import a Google Takeout export (.zip or .json files) for ${state.current === 'all' ? 'one of your accounts' : esc(accountName(state.current))}.</p>
+      <div class="btns" style="max-width:320px;margin:16px auto 0"><button class="btn primary" id="emptyImp">Import Takeout file</button>
+      <button class="btn" id="emptyHow">How to get the file</button></div></div>`;
+    $('#emptyImp').onclick = () => startImport();
+    $('#emptyHow').onclick = () => instructionsSheet(state.current === 'all' ? state.accounts[0].id : state.current);
+    return;
+  }
+  if (!list.length) { el.innerHTML = `<div class="empty"><div class="big">🔍</div><h2>Nothing here</h2><p>No ${state.kind === 'iap' ? 'in-app purchases' : state.kind === 'sub' ? 'subscriptions' : 'items'} match.</p></div>`; return; }
+  const showAcc = state.current === 'all' && state.accounts.length > 1;
+  const CHUNK = 300;
+  const html = (arr) => arr.map(i => {
+    const letter = (i.title.match(/[\p{L}\p{N}]/u) || ['?'])[0].toUpperCase();
+    const badges = [...(i.badges || [])].map(b => `<span class="badge ${badgeClass(b)}">${esc(b)}</span>`);
+    if (showAcc) badges.unshift(`<span class="badge acct">${esc(accountName(i.accountId))}</span>`);
+    const sub = [fmtDate(i.purchaseTime), i.paymentMethod].filter(Boolean).join(' · ');
+    const price = i.kind === 'library' ? '' : (i.amount != null ? fmtMoney(i.amount, i.currency) : (i.priceRaw || ''));
+    return `<button class="item" data-id="${esc(i.id)}"><div class="av" style="background:${colorFor(i.title)}">${esc(letter)}</div>
+      <div class="info"><div class="title">${esc(i.title)}</div><div class="sub">${esc(sub)}</div>${badges.length ? `<div class="badges">${badges.join('')}</div>` : ''}</div>
+      <div class="price">${esc(price)}</div></button>`;
+  }).join('');
+  el.innerHTML = html(list.slice(0, CHUNK));
+  if (list.length > CHUNK) {
+    const more = document.createElement('button'); more.className = 'btn'; more.textContent = `Show all ${list.length}`;
+    more.onclick = () => { el.innerHTML = html(list); bindItems(); };
+    el.appendChild(more);
+  }
+  bindItems();
+}
+function bindItems() { $('#list').querySelectorAll('.item').forEach(b => b.onclick = () => itemSheet(b.dataset.id)); }
+
+function render() {
+  renderChips();
+  const scoped = scopedItems();
+  ['app', 'iap', 'sub', 'library'].forEach(k => { const n = scoped.filter(i => i.kind === k).length; $(`[data-n="${k}"]`).textContent = n ? `(${n})` : ''; });
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.kind === state.kind));
+  renderYears();
+  const list = filtered();
+  renderTotals(list);
+  renderList(list);
+}
+
+/* =========================================================
+   SHEETS
+   ========================================================= */
+function openSheet(html, onOpen) {
+  $('#sheet').innerHTML = '<div class="grab"></div>' + html;
+  $('#scrim').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  onOpen && onOpen($('#sheet'));
+}
+function closeSheet() { $('#scrim').classList.remove('open'); document.body.style.overflow = ''; }
+$('#scrim').addEventListener('click', e => { if (e.target.id === 'scrim') closeSheet(); });
+
+function addAccountSheet() {
+  openSheet(`<h2>Add Account</h2><p>Give each Google account a label so you can tell them apart.</p>
+    <label class="f" for="accLabel">Label</label><input class="t" id="accLabel" placeholder="e.g. Work Gmail" maxlength="40">
+    <label class="f" for="accEmail">Email address</label><input class="t" id="accEmail" type="email" inputmode="email" autocomplete="email" placeholder="name@gmail.com">
+    <div class="btns two" style="margin-top:18px"><button class="btn" id="accCancel">Cancel</button><button class="btn primary" id="accSave">Save</button></div>`, s => {
+    $('#accCancel', s).onclick = closeSheet;
+    $('#accSave', s).onclick = async () => {
+      const label = $('#accLabel', s).value.trim();
+      const email = $('#accEmail', s).value.trim();
+      if (!label) { toast('Please enter a label'); return; }
+      if (!/^\S+@\S+\.\S+$/.test(email)) { toast('Please enter a valid email'); return; }
+      if (state.accounts.some(a => a.email.toLowerCase() === email.toLowerCase())) { toast('That email is already added'); return; }
+      const acc = { id: uid(), label, email, created: Date.now(), lastImport: null };
+      await DB.put('accounts', acc);
+      state.current = acc.id; localStorage.setItem('pa.current', acc.id);
+      await reload();
+      instructionsSheet(acc.id);
+    };
+    setTimeout(() => $('#accLabel', s).focus(), 250);
+  });
+}
+
+function instructionsSheet(accountId) {
+  const acc = state.accounts.find(a => a.id === accountId);
+  if (!acc) return;
+  openSheet(`<h2>Get your purchase history</h2>
+    <p>For <b>${esc(acc.label)}</b> · ${esc(acc.email)}</p>
+    <ol class="steps">
+      <li>Tap <b>Open Google Takeout</b> below. Check the account shown top-right is <b>${esc(acc.email)}</b> — switch it if not.</li>
+      <li>Tap <b>Deselect all</b> at the top of the list.</li>
+      <li>Scroll down and tick only <b>Google Play Store</b>.</li>
+      <li>Tap <b>Next step</b>. Choose <b>Export once</b>, file type <b>.zip</b>, then <b>Create export</b>.</li>
+      <li>Wait for Google's email (usually minutes, sometimes hours) and download the .zip to this phone.</li>
+      <li>Come back here and tap <b>Import</b>, then pick the .zip (or the .json files inside it).</li>
+    </ol>
+    <div class="note">Google gives no app access to purchase history, so Takeout is the only way. The file is opened on this phone only — nothing is uploaded anywhere.</div>
+    <div class="btns">
+      <button class="btn primary" id="openTakeout"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>Open Google Takeout</button>
+      <button class="btn" id="impNow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M4 19h16"/></svg>Import</button>
+      <button class="btn" id="later">Later</button>
+    </div>`, s => {
+    $('#openTakeout', s).onclick = () => openExternal('https://takeout.google.com/?authuser=' + encodeURIComponent(acc.email));
+    $('#impNow', s).onclick = () => { closeSheet(); startImport(acc.id); };
+    $('#later', s).onclick = closeSheet;
+  });
+}
+
+let importTarget = null;
+function startImport(accountId) {
+  if (!state.accounts.length) { addAccountSheet(); return; }
+  const target = accountId || (state.current !== 'all' ? state.current : null);
+  if (!target) {
+    if (state.accounts.length === 1) { importTarget = state.accounts[0].id; $('#fileInput').click(); return; }
+    openSheet(`<h2>Import for which account?</h2><p>Pick the Google account this Takeout file belongs to.</p>
+      <div class="btns">${state.accounts.map(a => `<button class="btn" data-pick="${esc(a.id)}">${esc(a.label)} · ${esc(a.email)}</button>`).join('')}</div>`, s => {
+      s.querySelectorAll('[data-pick]').forEach(b => b.onclick = () => { closeSheet(); importTarget = b.dataset.pick; $('#fileInput').click(); });
+    });
+    return;
+  }
+  importTarget = target;
+  $('#fileInput').click();
+}
+$('#fileInput').addEventListener('change', async (e) => {
+  const files = [...e.target.files]; e.target.value = '';
+  if (!files.length || !importTarget) return;
+  const acc = state.accounts.find(a => a.id === importTarget);
+  openSheet(`<h2>Importing…</h2><p id="impMsg">Preparing…</p><div class="progress"><div id="impBar"></div></div>`);
+  const setP = (m, f) => { const mm = $('#impMsg'); if (mm) mm.textContent = m; const b = $('#impBar'); if (b) b.style.width = Math.round(f * 100) + '%'; };
+  try {
+    const { records, summary, jsonCount } = await parseInputFiles(files, setP);
+    setP('Saving…', 0.85);
+    if (!records.length) {
+      openSheet(`<h2>No purchases found</h2><p>${jsonCount ? `Read ${jsonCount} JSON file${jsonCount === 1 ? '' : 's'} but found no Play Store app purchases.` : 'No JSON files were found in what you picked.'}</p>
+        <div class="note">Make sure you exported <b>Google Play Store</b> in Takeout and picked the .zip (or "Purchase History.json" / "Order History.json" from inside it). If the account has never bought anything, there is nothing to show.</div>
+        <div class="btns"><button class="btn primary" id="okBtn">OK</button></div>`, s => $('#okBtn', s).onclick = closeSheet);
+      return;
+    }
+    const { added, merged } = await importForAccount(acc.id, records);
+    await reload();
+    const counts = { app: 0, iap: 0, sub: 0, library: 0 };
+    records.forEach(r => counts[r.kind]++);
+    openSheet(`<h2>Import complete</h2><p>${esc(acc.label)} · ${esc(acc.email)}</p>
+      <dl class="kv"><dt>New items</dt><dd>${added}</dd><dt>Already known / merged</dt><dd>${merged}</dd>
+      <dt>Apps</dt><dd>${counts.app}</dd><dt>In-app</dt><dd>${counts.iap}</dd><dt>Subscriptions</dt><dd>${counts.sub}</dd><dt>Library</dt><dd>${counts.library}</dd></dl>
+      <div class="sectlabel">Files read</div><div class="meta">${Object.entries(summary).map(([k, v]) => `${esc(k)}: ${v}`).join('<br>') || '—'}</div>
+      <div class="btns" style="margin-top:16px"><button class="btn primary" id="okBtn">Done</button></div>`, s => $('#okBtn', s).onclick = closeSheet);
+  } catch (err) {
+    console.error(err);
+    openSheet(`<h2>Import failed</h2><p>${esc(err.message || String(err))}</p><div class="btns"><button class="btn primary" id="okBtn">OK</button></div>`, s => $('#okBtn', s).onclick = closeSheet);
+  }
+});
+
+function playUrl(i) {
+  return i.packageId ? `https://play.google.com/store/apps/details?id=${encodeURIComponent(i.packageId)}`
+    : `https://play.google.com/store/search?q=${encodeURIComponent(i.title)}&c=apps`;
+}
+function itemSheet(id) {
+  const i = state.items.find(x => x.id === id); if (!i) return;
+  const kindLabel = { app: 'App purchase', iap: 'In-app purchase', sub: 'Subscription', library: 'Library app' }[i.kind];
+  const price = i.amount != null ? fmtMoney(i.amount, i.currency) : (i.priceRaw || '—');
+  openSheet(`<h2>${esc(i.title)}</h2><p>${esc(kindLabel)}${i.badges && i.badges.length ? ' · ' + esc(i.badges.join(', ')) : ''}</p>
+    <dl class="kv">
+      <dt>Account</dt><dd>${esc(accountName(i.accountId))}</dd>
+      <dt>${i.kind === 'library' ? 'Added' : 'Purchased'}</dt><dd>${esc(i.purchaseTime ? new Date(i.purchaseTime).toLocaleString() : '—')}</dd>
+      ${i.kind !== 'library' ? `<dt>Price paid</dt><dd>${esc(price)}${i.currency ? ' <span class="meta">(' + esc(i.currency) + ')</span>' : ''}</dd>` : ''}
+      ${i.paymentMethod ? `<dt>Payment</dt><dd>${esc(i.paymentMethod)}</dd>` : ''}
+      ${i.orderId ? `<dt>Order ID</dt><dd>${esc(i.orderId.replace(/#\d+$/, ''))}</dd>` : ''}
+      <dt>Package</dt><dd>${esc(i.packageId || 'Not in export')}</dd>
+      <dt>From file</dt><dd>${esc((i.sources || []).join(', '))}</dd>
+    </dl>
+    <div class="btns"><button class="btn primary" id="openPlay">${i.packageId ? 'Open in Play Store' : 'Search Play Store'}</button>
+    <button class="btn" id="closeIt">Close</button></div>`, s => {
+    $('#openPlay', s).onclick = () => openExternal(playUrl(i));
+    $('#closeIt', s).onclick = closeSheet;
+  });
+}
+
+function accountSheet(id) {
+  const a = state.accounts.find(x => x.id === id); if (!a) return;
+  const items = state.items.filter(i => i.accountId === id);
+  openSheet(`<h2>${esc(a.label)}</h2><p>${esc(a.email)}</p>
+    <dl class="kv"><dt>Items stored</dt><dd>${items.length}</dd><dt>Last import</dt><dd>${a.lastImport ? esc(new Date(a.lastImport).toLocaleString()) : 'Never'}</dd></dl>
+    <div class="btns">
+      <button class="btn primary" id="aImp">Import Takeout file</button>
+      <button class="btn" id="aHow">Takeout instructions</button>
+      <button class="btn" id="aRen">Edit label / email</button>
+      <button class="btn danger" id="aDel">Delete account and its data</button>
+      <button class="btn" id="aClose">Close</button>
+    </div>`, s => {
+    $('#aImp', s).onclick = () => { closeSheet(); startImport(id); };
+    $('#aHow', s).onclick = () => instructionsSheet(id);
+    $('#aRen', s).onclick = () => editAccountSheet(id);
+    $('#aDel', s).onclick = () => {
+      openSheet(`<h2>Delete ${esc(a.label)}?</h2><p>This removes the account and all ${items.length} imported items from this phone. You can re-import from Takeout later.</p>
+        <div class="btns two"><button class="btn" id="dNo">Cancel</button><button class="btn danger" id="dYes">Delete</button></div>`, s2 => {
+        $('#dNo', s2).onclick = () => accountSheet(id);
+        $('#dYes', s2).onclick = async () => { await DB.deleteAccount(id); if (state.current === id) state.current = 'all'; closeSheet(); await reload(); toast('Account deleted'); };
+      });
+    };
+    $('#aClose', s).onclick = closeSheet;
+  });
+}
+function editAccountSheet(id) {
+  const a = state.accounts.find(x => x.id === id); if (!a) return;
+  openSheet(`<h2>Edit account</h2>
+    <label class="f" for="eLabel">Label</label><input class="t" id="eLabel" value="${esc(a.label)}" maxlength="40">
+    <label class="f" for="eEmail">Email address</label><input class="t" id="eEmail" type="email" value="${esc(a.email)}">
+    <div class="btns two" style="margin-top:18px"><button class="btn" id="eCancel">Cancel</button><button class="btn primary" id="eSave">Save</button></div>`, s => {
+    $('#eCancel', s).onclick = () => accountSheet(id);
+    $('#eSave', s).onclick = async () => {
+      const label = $('#eLabel', s).value.trim(), email = $('#eEmail', s).value.trim();
+      if (!label || !/^\S+@\S+\.\S+$/.test(email)) { toast('Enter a label and a valid email'); return; }
+      a.label = label; a.email = email; await DB.put('accounts', a); await reload(); accountSheet(id);
+    };
+  });
+}
+
+function moreSheet() {
+  const curName = state.current === 'all' ? 'All accounts' : accountName(state.current);
+  openSheet(`<h2>Menu</h2><p>Version ${APP_VERSION}</p>
+    <div class="sectlabel">Export ${esc(curName)}</div>
+    <div class="btns two"><button class="btn" id="xCsv">CSV</button><button class="btn" id="xPdf">PDF</button></div>
+    ${state.current !== 'all' && state.accounts.length > 1 ? `<div class="sectlabel">Export all accounts</div>
+    <div class="btns two"><button class="btn" id="xCsvAll">CSV</button><button class="btn" id="xPdfAll">PDF</button></div>` : ''}
+    <div class="sectlabel">Accounts</div>
+    <div class="btns">
+      <button class="btn" id="mAdd">Add Account</button>
+      <button class="btn" id="mImp">Import Takeout file</button>
+      ${state.accounts.map(a => `<button class="btn" data-manage="${esc(a.id)}">Manage ${esc(a.label)}</button>`).join('')}
+    </div>
+    <div class="note">Tip: long-press an account at the top to manage or delete it. Totals exclude refunded items. "Free" and "No longer on store" badges appear only when Google's export includes that information.</div>`, s => {
+    $('#xCsv', s).onclick = () => exportData('csv', state.current);
+    $('#xPdf', s).onclick = () => exportData('pdf', state.current);
+    if ($('#xCsvAll', s)) { $('#xCsvAll', s).onclick = () => exportData('csv', 'all'); $('#xPdfAll', s).onclick = () => exportData('pdf', 'all'); }
+    $('#mAdd', s).onclick = () => addAccountSheet();
+    $('#mImp', s).onclick = () => { closeSheet(); startImport(); };
+    s.querySelectorAll('[data-manage]').forEach(b => b.onclick = () => accountSheet(b.dataset.manage));
+  });
+}
+
+/* =========================================================
+   EXPORT (CSV / PDF)
+   ========================================================= */
+const KIND_NAMES = { app: 'App', iap: 'In-app', sub: 'Subscription' };
+function exportRows(acct) {
+  return scopedItems(acct).filter(i => i.kind !== 'library')
+    .sort((a, b) => (a.accountId === b.accountId ? 0 : accountName(a.accountId).localeCompare(accountName(b.accountId))) || ((b.purchaseTime ? new Date(b.purchaseTime) : 0) - (a.purchaseTime ? new Date(a.purchaseTime) : 0)));
+}
+function fileBase(acct) {
+  const name = acct === 'all' ? 'all-accounts' : accountName(acct).replace(/[^\w-]+/g, '-');
+  return `purchased-apps-${name}-${new Date().toISOString().slice(0, 10)}`;
+}
+async function saveFile(blob, filename, mime) {
+  if (IS_NATIVE && window.Capacitor.Plugins && window.Capacitor.Plugins.Filesystem) {
+    const { Filesystem, Share } = window.Capacitor.Plugins;
+    const b64 = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(',')[1]); r.onerror = rej; r.readAsDataURL(blob); });
+    const w = await Filesystem.writeFile({ path: filename, data: b64, directory: 'CACHE' });
+    if (Share) await Share.share({ title: filename, files: [w.uri], dialogTitle: 'Save or share ' + filename });
+    return;
+  }
+  const file = new File([blob], filename, { type: mime });
+  if (navigator.canShare && IS_IOS && navigator.canShare({ files: [file] })) {
+    try { await navigator.share({ files: [file], title: filename }); return; } catch (e) { if (e.name === 'AbortError') return; }
+  }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+async function exportData(fmt, acct) {
+  const rows = exportRows(acct);
+  if (!rows.length) { toast('Nothing to export yet'); return; }
+  try {
+    if (fmt === 'csv') {
+      const head = ['Account', 'Email', 'Type', 'App', 'Package', 'Purchase date', 'Price', 'Currency', 'Amount', 'Payment method', 'Order ID', 'Notes'];
+      const q = v => { const s = String(v ?? ''); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+      const lines = [head.join(',')].concat(rows.map(i => {
+        const a = state.accounts.find(x => x.id === i.accountId) || {};
+        return [a.label, a.email, KIND_NAMES[i.kind], i.title, i.packageId, i.purchaseTime ? i.purchaseTime.slice(0, 10) : '', i.priceRaw, i.currency, i.amount, i.paymentMethod, (i.orderId || '').replace(/#\d+$/, ''), (i.badges || []).join('; ')].map(q).join(',');
+      }));
+      await saveFile(new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv' }), fileBase(acct) + '.csv', 'text/csv');
+    } else {
+      toast('Building PDF…');
+      await needLib('jspdf'); await needLib('autotable');
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+      const latin = s => String(s ?? '').replace(/[^\x20-\x7E -ÿ]/g, '?');
+      const money = (amt, cur) => amt == null ? '' : (amt === 0 ? 'Free' : `${cur || ''} ${amt.toFixed(2)}`.trim());
+      const title = acct === 'all' ? 'All accounts' : accountName(acct);
+      doc.setFontSize(18); doc.text('Purchased Apps', 40, 50);
+      doc.setFontSize(11); doc.setTextColor(100);
+      doc.text(latin(`${title}  ·  exported ${new Date().toLocaleDateString()}`), 40, 68);
+      let y = 84;
+      const accs = acct === 'all' ? state.accounts : state.accounts.filter(a => a.id === acct);
+      accs.forEach(a => {
+        const m = sumByCurrency(rows.filter(r => r.accountId === a.id));
+        const t = Object.keys(m).sort().map(c => money(m[c], c === '?' ? '' : c)).join(' + ') || 'nothing paid';
+        doc.text(latin(`${a.label} (${a.email}): ${t}`), 40, y); y += 15;
+      });
+      if (accs.length > 1) {
+        const m = sumByCurrency(rows);
+        doc.setTextColor(30); doc.text(latin('Overall: ' + (Object.keys(m).sort().map(c => money(m[c], c === '?' ? '' : c)).join(' + ') || '—')), 40, y); y += 15;
+      }
+      doc.autoTable({
+        startY: y + 6,
+        head: [['App', 'Type', 'Date', 'Price', 'Payment', ...(accs.length > 1 ? ['Account'] : [])]],
+        body: rows.map(i => [latin(i.title) + ((i.badges || []).length ? `\n(${latin(i.badges.join(', '))})` : ''), KIND_NAMES[i.kind], i.purchaseTime ? i.purchaseTime.slice(0, 10) : '', latin(money(i.amount, i.currency) || i.priceRaw || ''), latin(i.paymentMethod || ''), ...(accs.length > 1 ? [latin(accountName(i.accountId))] : [])]),
+        styles: { fontSize: 9, cellPadding: 4 },
+        headStyles: { fillColor: [37, 99, 235] },
+        alternateRowStyles: { fillColor: [244, 246, 251] },
+        margin: { left: 40, right: 40 }
+      });
+      await saveFile(doc.output('blob'), fileBase(acct) + '.pdf', 'application/pdf');
+    }
+  } catch (e) { console.error(e); toast(e.message || 'Export failed', 4000); }
+}
+
+/* =========================================================
+   INSTALL / UPDATE / SHARE / THEME
+   ========================================================= */
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredPrompt = e; });
+window.addEventListener('appinstalled', () => { deferredPrompt = null; toast('Installed!'); updateInstallBtn(); });
+function updateInstallBtn() { if (IS_NATIVE || IS_STANDALONE) $('#installBtn').classList.add('hidden'); }
+$('#installBtn').onclick = async () => {
+  if (deferredPrompt) { deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt = null; return; }
+  if (IS_IOS) {
+    openSheet(`<h2>Install on iPhone</h2><p>Open this page in <b>Safari</b>, then:</p>
+      <ol class="steps"><li>Tap the <b>Share</b> button (square with an arrow) at the bottom.</li><li>Scroll and tap <b>Add to Home Screen</b>.</li><li>Tap <b>Add</b>. The app now opens full-screen and works offline.</li></ol>
+      <div class="btns"><button class="btn primary" id="okI">Got it</button></div>`, s => $('#okI', s).onclick = closeSheet);
+  } else {
+    openSheet(`<h2>Install</h2><p>Open the browser menu (⋮) and tap <b>Install app</b> or <b>Add to Home screen</b>. If you don't see it, reload the page once and try again.</p>
+      <div class="btns"><button class="btn primary" id="okI">OK</button></div>`, s => $('#okI', s).onclick = closeSheet);
+  }
+};
+
+function newer(a, b) { const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number); for (let i = 0; i < 3; i++) { if ((pa[i] || 0) > (pb[i] || 0)) return true; if ((pa[i] || 0) < (pb[i] || 0)) return false; } return false; }
+$('#updateBtn').onclick = async () => {
+  if (!navigator.onLine) { toast('You are offline — connect to check for updates'); return; }
+  toast('Checking for updates…');
+  try {
+    const res = await fetch(APP_URL + 'version.json?t=' + Date.now(), { cache: 'no-store' });
+    const { version } = await res.json();
+    if (!version) throw new Error('No version info');
+    if (!newer(version, APP_VERSION)) { toast(`You have the latest version (${APP_VERSION})`); return; }
+    if (IS_NATIVE) {
+      openSheet(`<h2>Update available</h2><p>Version ${esc(version)} is out (you have ${APP_VERSION}). Download the new APK and install it over this one — your data stays.</p>
+        <div class="btns"><button class="btn primary" id="dl">Download APK</button><button class="btn" id="nl">Later</button></div>`, s => {
+        $('#dl', s).onclick = () => openExternal(RELEASES_URL); $('#nl', s).onclick = closeSheet;
+      });
+      return;
+    }
+    toast(`Updating to ${version}…`);
+    if ('serviceWorker' in navigator) {
+      const reg = await navigator.serviceWorker.getRegistration();
+      if (reg) await reg.update().catch(() => { });
+    }
+    const keys = await caches.keys(); await Promise.all(keys.map(k => caches.delete(k)));
+    setTimeout(() => location.reload(), 600);
+  } catch (e) { toast('Could not check for updates right now'); }
+};
+
+$('#shareBtn').onclick = async () => {
+  const data = { title: 'Purchased Apps', text: 'See every app you have bought on each Google account — offline and private.', url: APP_URL };
+  try {
+    if (IS_NATIVE && window.Capacitor.Plugins && window.Capacitor.Plugins.Share) { await window.Capacitor.Plugins.Share.share({ ...data, dialogTitle: 'Share Purchased Apps' }); return; }
+    if (navigator.share) { await navigator.share(data); return; }
+    await navigator.clipboard.writeText(APP_URL); toast('Link copied');
+  } catch (e) { if (e.name !== 'AbortError') { try { await navigator.clipboard.writeText(APP_URL); toast('Link copied'); } catch (_) { toast(APP_URL, 5000); } } }
+};
+
+function applyTheme() {
+  const t = localStorage.getItem('pa.theme');
+  if (t) document.documentElement.setAttribute('data-theme', t); else document.documentElement.removeAttribute('data-theme');
+}
+$('#themeBtn').onclick = () => {
+  const dark = document.documentElement.getAttribute('data-theme') === 'dark' ||
+    (!document.documentElement.getAttribute('data-theme') && matchMedia('(prefers-color-scheme: dark)').matches);
+  localStorage.setItem('pa.theme', dark ? 'light' : 'dark'); applyTheme();
+};
+
+/* ---------------- Wire up ---------------- */
+$('#tabs').addEventListener('click', e => { const t = e.target.closest('.tab'); if (!t) return; state.kind = t.dataset.kind; render(); });
+let qTimer; $('#q').addEventListener('input', e => { clearTimeout(qTimer); qTimer = setTimeout(() => { state.q = e.target.value.trim(); render(); }, 120); });
+$('#sort').addEventListener('change', e => { state.sort = e.target.value; render(); });
+$('#year').addEventListener('change', e => { state.year = e.target.value; render(); });
+$('#importTopBtn').onclick = () => startImport();
+$('#moreBtn').onclick = moreSheet;
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSheet(); });
+
+(async function init() {
+  applyTheme(); updateInstallBtn();
+  if (IS_NATIVE) document.documentElement.classList.add('native');
+  try { await DB.open(); } catch (e) { toast('Storage unavailable: ' + e.message, 6000); return; }
+  if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => { });
+  await reload();
+  if ('serviceWorker' in navigator && !IS_NATIVE && location.protocol === 'https:') {
+    navigator.serviceWorker.register('sw.js').catch(() => { });
+  }
+})();
+</script>
+</body>
+</html>
